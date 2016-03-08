@@ -37,10 +37,10 @@
 #
 #
 class phpmyadmin (
-  $path     = '/srv/phpmyadmin',
-  $user     = 'www-data',
-  $revision = 'origin/STABLE',
-  $servers  = [],
+  $path         = '/srv/phpmyadmin',
+  $user         = 'www-data',
+  $downloadurl  = 'https://files.phpmyadmin.net/phpMyAdmin/4.5.5.1/phpMyAdmin-4.5.5.1-all-languages.zip',
+  $servers      = [],
 ) {
 
   file { $path:
@@ -50,15 +50,19 @@ class phpmyadmin (
 
   ->
 
-  vcsrepo { $path:
-    ensure   => latest,
-    provider => 'git',
-    source   => 'https://github.com/phpmyadmin/phpmyadmin.git',
-    user     => $user,
-    revision => $revision,
-  }
+  exec { "fetch_phpmyadmin":
+    command   => "/usr/bin/wget -q ${downloadurl} -O ${path}/phpMyAdmin.zip",
+    creates => "${path}/phpMyAdmin.zip",
+  }->
 
-  ->
+  exec { "unzip_phpmyadmin":
+    cwd     => "${path}",
+    command => "/usr/bin/unzip phpMyAdmin.zip && cd phpMyAdmin-* && mv * ../ && cd - && rmdir phpMyAdmin-*",
+    creates => "${path}/build.xml",
+  }->
+  exec { "chown_phpmyadmin":
+    command   => "/bin/chown -R ${user} ${path}",
+  }->
 
   file { 'phpmyadmin-conf':
     path    => "${path}/config.inc.php",
