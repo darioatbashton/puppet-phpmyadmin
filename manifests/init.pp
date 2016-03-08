@@ -55,6 +55,9 @@ class phpmyadmin (
     creates => "${path}/phpMyAdmin.zip",
   }->
 
+  package { "unzip":
+    ensure => 'present',
+  }->
   exec { "unzip_phpmyadmin":
     cwd     => "${path}",
     command => "/usr/bin/unzip phpMyAdmin.zip && cd phpMyAdmin-* && mv * ../ && cd - && rmdir phpMyAdmin-*",
